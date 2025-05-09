@@ -3,16 +3,19 @@ import Image from 'next/image'
 import React, { useState } from 'react'
 import { useClerk, UserButton } from '@clerk/nextjs'
 import { useAppContext } from '@/context/AppContext'
+import { useThemeContext } from '@/context/ThemeContext'
 import ChatLabel from './ChatLabel'
+import ThemeToggle from './ThemeToggle'
 
 const Sidebar = ({expand, setExpand}) => {
 
     const {openSignIn} = useClerk()
     const {user, chats, createNewChat} = useAppContext()
+    const { darkMode } = useThemeContext()
     const [openMenu, setOpenMenu] = useState({id: 0, open: false})
 
   return (
-    <div className={`flex flex-col justify-between bg-[#212327] pt-7 transition-all z-50 max-md:absolute max-md:h-screen ${expand ? 'p-4 w-64' : 'md:w-20 w-0 max-md:overflow-hidden'}`}>
+    <div className={`flex flex-col justify-between ${darkMode ? 'bg-[#212327]' : 'bg-gray-100'} pt-7 transition-all z-50 max-md:absolute max-md:h-screen ${expand ? 'p-4 w-64' : 'md:w-20 w-0 max-md:overflow-hidden'}`}>
       <div>
         <div className={`flex ${expand ? "flex-row gap-10" : "flex-col items-center gap-8"}`}>
             <Image className={expand ? "w-36" : "w-10"} src={expand ? assets.logo_text : assets.logo_icon} alt=''/>
@@ -57,8 +60,13 @@ const Sidebar = ({expand, setExpand}) => {
             {expand && <> <span>Get App</span> <Image alt='' src={assets.new_icon}/> </>}
     </div>
 
+    <div className={`flex items-center ${expand ? 'justify-start pl-2 mb-2' : 'justify-center'}`}>
+      <ThemeToggle />
+      {expand && <span className={`ml-2 ${darkMode ? 'text-white/60' : 'text-gray-700'}`}></span>}
+    </div>
+
     <div onClick={user ? null : openSignIn}
-     className={`flex items-center ${expand ? ' hover:bg-white/10 rounded-lg' : 'justify-center w-full'} gap-3 text-white/60 text-sm p-2 mt-2 cursor-pointer`}>
+     className={`flex items-center ${expand ? ' hover:bg-white/10 rounded-lg' : 'justify-center w-full'} gap-3 ${darkMode ? 'text-white/60' : 'text-gray-700'} text-sm p-2 mt-2 cursor-pointer`}>
         {
             user ? <UserButton/>
             : <Image src={assets.profile_icon} alt='' className='w-7'/>

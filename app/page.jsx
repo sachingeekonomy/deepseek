@@ -6,6 +6,9 @@ import Sidebar from "@/components/Sidebar";
 import { useAppContext } from "@/context/AppContext";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
+import { useThemeContext } from "@/context/ThemeContext";
+import ThemeToggle from "@/components/ThemeToggle";
+import { jsPDF } from "jspdf";
 
 export default function Home() {
 
@@ -13,7 +16,33 @@ export default function Home() {
   const [messages, setMessages] = useState([])
   const [isLoading, setIsLoading] = useState(false)
   const {selectedChat} = useAppContext()
+  const { darkMode } = useThemeContext()
   const containerRef = useRef(null)
+
+  const downloadCodeAsPDF = (content) => {
+    const doc = new jsPDF();
+    const lines = content.split('\n');
+    let y = 10;
+    
+    // Add title
+    doc.setFontSize(16);
+    doc.text('Code Response', 10, y);
+    y += 10;
+    
+    // Add content
+    doc.setFontSize(12);
+    doc.setFont('courier');
+    lines.forEach(line => {
+      if (y > 280) {
+        doc.addPage();
+        y = 10;
+      }
+      doc.text(line, 10, y);
+      y += 7;
+    });
+    
+    doc.save('code-response.pdf');
+  };
 
   useEffect(()=>{
     if(selectedChat){
@@ -36,11 +65,15 @@ export default function Home() {
     <div>
       <div className="flex h-screen">
         <Sidebar expand={expand} setExpand={setExpand}/>
-        <div className="flex-1 flex flex-col items-center justify-center px-4 pb-8 bg-[#292a2d] text-white relative">
+        <div className={`flex-1 flex flex-col items-center justify-center px-4 pb-8 ${darkMode ? 'bg-[#292a2d] text-white' : 'bg-gray-50 text-gray-800'} relative`}>
           <div className="md:hidden absolute px-4 top-6 flex items-center justify-between w-full">
             <Image onClick={()=> (expand ? setExpand(false) : setExpand(true))}
              className="rotate-180" src={assets.menu_icon} alt=""/>
             <Image className="opacity-70" src={assets.chat_icon} alt=""/>
+          </div>
+
+          <div className="absolute top-6 right-6">
+            <ThemeToggle />
           </div>
 
           {messages.length === 0 ? (
@@ -58,7 +91,18 @@ export default function Home() {
           > 
           <p className="fixed top-8 border border-transparent hover:border-gray-500/50 py-1 px-2 rounded-lg font-semibold mb-6">{selectedChat.name}</p>
           {messages.map((msg, index)=>(
-            <Message key={index} role={msg.role} content={msg.content}/>
+            <div key={index} className="w-full max-w-3xl">
+              <Message role={msg.role} content={msg.content}/>
+              {!isLoading && msg.role === 'assistant' && msg.content.includes('```') && (
+                <button
+                  onClick={() => downloadCodeAsPDF(msg.content)}
+                  className="mt-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-2"
+                >
+                  <Image src={assets.download_icon} alt="Download" className="w-4 h-4"/>
+                  Download Code as PDF
+                </button>
+              )}
+            </div>
           ))}
           {
             isLoading && (
